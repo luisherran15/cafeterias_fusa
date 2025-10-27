@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código QR - {{ cafeteria.nombre }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .qr-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .cafe-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .cafe-info {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .qr-image {
+            background: white;
+            padding: 20px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+
+        .qr-image img {
+            display: block;
+            max-width: 300px;
+            width: 100%;
+            height: auto;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .instructions h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .instructions ol {
+            padding-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .cafe-id {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .cafe-id strong {
+            color: #856404;
+            font-size: 18px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .print-note {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #999;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .actions, .print-note {
+                display: none;
+            }
+
+            .qr-container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .qr-container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-container">
+        <div class="cafe-icon">☕</div>
+        <h1>{{ cafeteria.nombre }}</h1>
+        <p class="cafe-info">{{ cafeteria.direccion }}</p>
+
+        <div class="qr-image">
+            <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR de {{ cafeteria.nombre }}">
+        </div>
+
+        <div class="cafe-id">
+            <strong>ID de Cafetería:</strong> {{ cafeteria.id }}
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Instrucciones para Clientes:</h3>
+            <ol>
+                <li>Abre la app de Fusa Cafés</li>
+                <li>Ve a la sección "Escanear QR"</li>
+                <li>Escanea este código o ingresa el ID: <strong>{{ cafeteria.id }}</strong></li>
+                <li>¡Listo! Ganas 1 punto de fidelidad por cada visita</li>
+                <li>Cada 5 visitas = 1 recompensa especial 🎁</li>
+            </ol>
+        </div>
+
+        <div class="actions">
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Imprimir QR
+            </button>
+            <a href="{{ url_for('generar_qr', cafeteria_id=cafeteria.id) }}" class="btn btn-primary" download>
+                💾 Descargar QR
+            </a>
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                ← Volver al Dashboard
+            </a>
+        </div>
+
+        <p class="print-note">💡 Tip: Imprime este QR y colócalo en un lugar visible de tu cafetería</p>
+    </div>
+</body>
+</html>

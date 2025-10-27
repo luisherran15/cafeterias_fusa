@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cliente - Cafeterías Fusa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        nav {
+            background: linear-gradient(135deg, #6B4423 0%, #3E2723 100%);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        nav h1 {
+            font-size: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .hero-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .hero-section h2 {
+            color: #6B4423;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .acciones-rapidas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tarjeta-accion {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        
+        .tarjeta-accion:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .tarjeta-accion .icono {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tarjeta-accion h3 {
+            color: #6B4423;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tarjeta-accion p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .tarjeta-certificado {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tarjeta-certificado h3,
+        .tarjeta-certificado p {
+            color: white;
+        }
+        
+        .seccion-visitas {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .seccion-visitas h2 {
+            color: #6B4423;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #6B4423;
+            padding-bottom: 0.5rem;
+        }
+        
+        .lista-visitas {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .visita-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        
+        .visita-item:hover {
+            border-color: #6B4423;
+            background: #f9f9f9;
+        }
+        
+        .visita-icono {
+            font-size: 2rem;
+            margin-right: 1rem;
+        }
+        
+        .visita-info h3 {
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+        
+        .visita-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .badge {
+            background: #4CAF50;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: auto;
+        }
+        
+        .sin-visitas {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        
+        .sin-visitas .icono-grande {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.activo {
+            display: flex;
+        }
+        
+        .modal-contenido {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header h2 {
+            color: #6B4423;
+        }
+        
+        .btn-cerrar {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .btn-cerrar:hover {
+            color: #333;
+        }
+        
+        #video-container {
+            width: 100%;
+            margin: 1rem 0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #qr-video {
+            width: 100%;
+            height: auto;
+        }
+        
+        .boton-primario {
+            background: linear-gradient(135deg, #6B4423 0%, #3E2723 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: transform 0.3s;
+        }
+        
+        .boton-primario:hover {
+            transform: scale(1.05);
+        }
+        
+        .alerta {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .alerta.exito {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alerta.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alerta.activa {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <h1>☕ Cafeterías Fusagasugá</h1>
+        <div class="nav-links">
+            <span>Hola, {{ session.nombre }}</span>
+            <a href="{{ url_for('index') }}">Mapa</a>
+            <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="hero-section">
+            <h2>¡Bienvenido al Recorrido Cafetero! ☕</h2>
+            <p>Descubre las mejores cafeterías de Fusagasugá y obtén tu certificado</p>
+        </div>
+        
+        <div class="acciones-rapidas">
+            <a href="#" class="tarjeta-accion" onclick="abrirEscaner(); return false;">
+                <div class="icono">📷</div>
+                <h3>Escanear QR</h3>
+                <p>Registra tu visita a una cafetería</p>
+            </a>
+            
+            <a href="{{ url_for('verificar_progreso_certificado') }}" class="tarjeta-accion tarjeta-certificado">
+                <div class="icono">🏆</div>
+                <h3>Mi Certificado</h3>
+                <p>{% if tiene_certificado %}¡Descargar certificado!{% else %}Ver progreso{% endif %}</p>
+            </a>
+            
+            <a href="{{ url_for('index') }}" class="tarjeta-accion">
+                <div class="icono">🗺️</div>
+                <h3>Ver Mapa</h3>
+                <p>Explora todas las cafeterías</p>
+            </a>
+        </div>
+        
+        <div class="seccion-visitas">
+            <h2>📍 Tus Visitas Recientes</h2>
+            
+            {% if visitas %}
+            <div class="lista-visitas">
+                {% for visita in visitas %}
+                <div class="visita-item">
+                    <div class="visita-icono">☕</div>
+                    <div class="visita-info">
+                        <h3>{{ visita['nombre'] }}</h3>
+                        <p>📍 {{ visita['direccion'] }}</p>
+                        <p>📅 {{ visita['fecha_visita'].strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                    <div class="badge">✓ Visitada</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="sin-visitas">
+                <div class="icono-grande">📍</div>
+                <h3>Aún no has visitado ninguna cafetería</h3>
+                <p>Escanea el código QR en tu primera cafetería para comenzar</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Modal para escanear QR -->
+    <div id="modal-qr" class="modal">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2>Escanear Código QR</h2>
+                <button class="btn-cerrar" onclick="cerrarEscaner()">✕</button>
+            </div>
+            
+            <div class="alerta" id="alerta-qr"></div>
+            
+            <div id="video-container">
+                <video id="qr-video" autoplay playsinline></video>
+            </div>
+            
+            <p style="text-align: center; color: #666; margin: 1rem 0;">
+                Enfoca el código QR de la cafetería
+            </p>
+            
+            <button class="boton-primario" onclick="cerrarEscaner()">
+                Cancelar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Librería para escanear QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    
+    <script>
+        let stream = null;
+        let scanning = false;
+        
+        function abrirEscaner() {
+            const modal = document.getElementById('modal-qr');
+            modal.classList.add('activo');
+            iniciarCamara();
+        }
+        
+        function cerrarEscaner() {
+            const modal = document.getElementById('modal-qr');
+            modal.classList.remove('activo');
+            detenerCamara();
+        }
+        
+        async function iniciarCamara() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                const video = document.getElementById('qr-video');
+                video.srcObject = stream;
+                scanning = true;
+                escanearFrame();
+            } catch (err) {
+                mostrarAlerta('error', 'No se pudo acceder a la cámara');
+                console.error('Error al acceder a la cámara:', err);
+            }
+        }
+        
+        function detenerCamara() {
+            scanning = false;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+        
+        function escanearFrame() {
+            if (!scanning) return;
+            
+            const video = document.getElementById('qr-video');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    procesarCodigoQR(code.data);
+                    return;
+                }
+            }
+            
+            requestAnimationFrame(escanearFrame);
+        }
+        
+        async function procesarCodigoQR(data) {
+            // Extraer el código del formato "cafeteria:CODIGO"
+            const partes = data.split(':');
+            if (partes.length !== 2 || partes[0] !== 'cafeteria') {
+                mostrarAlerta('error', 'Código QR no válido');
+                setTimeout(() => { scanning = true; escanearFrame(); }, 2000);
+                return;
+            }
+            
+            const codigo = partes[1];
+            scanning = false; // Detener escaneo mientras procesamos
+            
+            try {
+                const formData = new FormData();
+                formData.append('codigo_qr', codigo);
+                
+                const response = await fetch('{{ url_for("escanear_qr") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    mostrarAlerta('exito', result.message);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    mostrarAlerta('error', result.message);
+                    setTimeout(() => { scanning = true; escanearFrame(); }, 2000);
+                }
+            } catch (error) {
+                mostrarAlerta('error', 'Error al procesar el código QR');
+                setTimeout(() => { scanning = true; escanearFrame(); }, 2000);
+            }
+        }
+        
+        function mostrarAlerta(tipo, mensaje) {
+            const alerta = document.getElementById('alerta-qr');
+            alerta.className = `alerta ${tipo} activa`;
+            alerta.textContent = mensaje;
+            
+            setTimeout(() => {
+                alerta.classList.remove('activa');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

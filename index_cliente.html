@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FusaCafés | Vista Cliente</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración del font Inter -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* Estilos de Leaflet */
+        @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+        
+        /* Asegura que el mapa ocupe todo el espacio disponible */
+        #map {
+            height: 100vh;
+            width: 100%;
+            border-radius: 0.75rem; /* rounded-xl */
+        }
+        
+        /* Estilo para los Pop-ups de Leaflet */
+        .leaflet-popup-content-wrapper {
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0;
+        }
+        .leaflet-popup-content {
+            margin: 0;
+            padding: 0.5rem;
+        }
+
+        /* Vistas secundarias ocultas por defecto */
+        #detail-view, #qr-scan-view, #profile-view {
+            display: none;
+        }
+
+        /* Estrellas para valoración */
+        .star-rating .star {
+            cursor: pointer;
+            color: #ccc;
+            font-size: 1.5rem;
+        }
+        .star-rating .star.filled {
+            color: #f59e0b; /* amber-500 */
+        }
+    </style>
+    <!-- Leaflet JS CDN -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-amber-700 text-white shadow-lg p-4 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold tracking-tight">FusaCafés <span class="text-amber-300">| Cliente</span></h1>
+            <div class="flex items-center space-x-4">
+                <!-- BOTÓN PARA PERFIL -->
+                <button onclick="showProfileView()" class="bg-amber-600 hover:bg-amber-500 text-white font-medium py-1 px-3 rounded-md transition duration-150 shadow-md flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.98 5.98 0 0010 16a5.978 5.978 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                    </svg>
+                    Mi Perfil
+                </button>
+                <!-- BOTÓN PARA ESCANEAR QR -->
+                <button onclick="showQRScannerView()" class="bg-amber-600 hover:bg-amber-500 text-white font-medium py-1 px-3 rounded-md transition duration-150 shadow-md flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h4a1 1 0 011 1v4a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414-1.414L13.586 7H12z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h4a1 1 0 010 2H5v1h.013a1 1 0 01.121.268l2.92 7.299a1 1 0 01-.121.933H5.01V15h4a1 1 0 010 2H5.01a1 1 0 01-.121-.268l-2.92-7.299a1 1 0 01.121-.933H3V3z" clip-rule="evenodd" />
+                    </svg>
+                    Escanear QR
+                </button>
+                <div id="auth-info" class="text-sm font-medium">Cargando usuario...</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Contenedor del Mapa (Vista principal) -->
+        <div id="map-container" class="p-4 h-[calc(100vh-64px)]">
+            <div id="map" class="shadow-2xl"></div>
+        </div>
+
+        <!-- Contenedor de Detalles de la Cafetería -->
+        <div id="detail-view" class="p-4 pt-8 max-w-4xl mx-auto">
+            <button onclick="showMapView()" class="mb-4 text-amber-700 hover:text-amber-900 flex items-center font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Volver al Mapa
+            </button>
+            <div id="detail-content" class="bg-white rounded-xl shadow-2xl p-6 md:p-8">
+                <!-- Contenido dinámico de la cafetería -->
+            </div>
+        </div>
+        
+        <!-- Contenedor de Escaneo QR -->
+        <div id="qr-scan-view" class="p-4 pt-8 max-w-xl mx-auto">
+            <button onclick="showMapView()" class="mb-6 text-amber-700 hover:text-amber-900 flex items-center font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Volver al Mapa
+            </button>
+            <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 text-center">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Registro de Visita (QR)</h2>
+                <p class="text-gray-500 mb-6">Introduce el ID de la Cafetería para registrar tu visita y ganar beneficios.</p>
+                
+                <input type="text" id="qr-code-input" placeholder="Ej: '0eM4jG1kZf7pS2rQ8tYv'"
+                       class="w-full p-3 border-2 border-amber-300 rounded-lg mb-4 focus:ring-amber-500 focus:border-amber-500">
+                       
+                <button onclick="registerVisit()" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.03 12.03 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Registrar Visita
+                </button>
+                <div id="qr-status-message" class="mt-4 text-sm font-medium"></div>
+            </div>
+        </div>
+
+        <!-- Contenedor de Perfil de Cliente (NUEVA VISTA) -->
+        <div id="profile-view" class="p-4 pt-8 max-w-4xl mx-auto">
+            <button onclick="showMapView()" class="mb-6 text-amber-700 hover:text-amber-900 flex items-center font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                Volver al Mapa
+            </button>
+            <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8">
+                <h2 class="text-3xl font-extrabold text-amber-800 border-b-2 border-amber-100 pb-2 mb-6">Mi Perfil de Fidelidad</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Tarjeta 1: ID de Usuario -->
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-inner">
+                        <p class="text-sm font-medium text-gray-500">ID Único de Cliente</p>
+                        <p id="profile-user-id" class="text-lg font-mono truncate text-gray-700">Cargando...</p>
+                    </div>
+
+                    <!-- Tarjeta 2: Visitas Totales -->
+                    <div class="bg-amber-100 p-4 rounded-lg shadow-md flex flex-col justify-center items-center">
+                        <p class="text-sm font-medium text-amber-700">Visitas Registradas</p>
+                        <p id="profile-total-visits" class="text-4xl font-bold text-amber-800 mt-1">0</p>
+                    </div>
+
+                    <!-- Tarjeta 3: Recompensas Disponibles -->
+                    <div class="bg-green-100 p-4 rounded-lg shadow-md flex flex-col justify-center items-center">
+                        <p class="text-sm font-medium text-green-700">Recompensas (1 c/10 Visitas)</p>
+                        <p id="profile-rewards" class="text-4xl font-bold text-green-800 mt-1">0</p>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Historial de Visitas Recientes</h3>
+                <div id="profile-recent-visits" class="space-y-3">
+                    <p class="text-gray-500">Cargando historial...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        // Importaciones de Firebase 
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, getDoc, doc, query, where, onSnapshot, addDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variables globales del entorno Canvas (MANDATORIAS)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let userId = null;
+        let map;
+        let currentCafeId = null;
+        let userRating = 0; 
+
+        // Referencias a elementos del DOM
+        const mapContainerEl = document.getElementById('map-container');
+        const detailViewEl = document.getElementById('detail-view');
+        const qrScanViewEl = document.getElementById('qr-scan-view'); 
+        const profileViewEl = document.getElementById('profile-view'); // Nuevo
+        const qrCodeInput = document.getElementById('qr-code-input');
+        const submitReviewBtn = document.getElementById('submit-review-btn');
+        const ratingStarsContainer = document.getElementById('rating-stars');
+        
+        // Referencias del Perfil
+        const profileUserIdEl = document.getElementById('profile-user-id');
+        const profileTotalVisitsEl = document.getElementById('profile-total-visits');
+        const profileRewardsEl = document.getElementById('profile-rewards');
+        const profileRecentVisitsEl = document.getElementById('profile-recent-visits');
+
+
+        // -------------------------------------------------------------------
+        // FIREBASE & AUTHENTICATION
+        // -------------------------------------------------------------------
+        async function initFirebaseAndAuth() {
+            try {
+                setLogLevel('debug'); 
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    const authInfoEl = document.getElementById('auth-info');
+                    if (user) {
+                        userId = user.uid;
+                        authInfoEl.innerHTML = `Usuario ID: <span class="text-amber-200">${userId.substring(0, 8)}...</span>`;
+                        console.log("Usuario autenticado. ID:", userId);
+                    } else {
+                        userId = crypto.randomUUID(); 
+                        authInfoEl.innerHTML = `Visitante ID: <span class="text-amber-200">${userId.substring(0, 8)}...</span>`;
+                        console.log("Usuario anónimo o visitante. ID generado:", userId);
+                        // Deshabilitar el botón de valoración para visitantes no logueados 
+                        if (submitReviewBtn) {
+                            submitReviewBtn.disabled = true;
+                            submitReviewBtn.textContent = "Inicia sesión para valorar";
+                            submitReviewBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
+                    initMap();
+                    loadCafeterias();
+                    // Cargamos el perfil inicialmente para tener el dato del ID
+                    loadUserProfile(); 
+                });
+
+            } catch (error) {
+                console.error("Error al inicializar Firebase o autenticar:", error);
+                document.getElementById('auth-info').textContent = "Error de autenticación.";
+            }
+        }
+
+        // -------------------------------------------------------------------
+        // VIEW MANAGEMENT
+        // -------------------------------------------------------------------
+
+        /**
+         * Oculta todas las vistas secundarias y muestra el mapa principal.
+         */
+        window.showMapView = function() {
+            detailViewEl.style.display = 'none';
+            qrScanViewEl.style.display = 'none';
+            profileViewEl.style.display = 'none'; // Ocultar perfil
+            mapContainerEl.style.display = 'block';
+            
+            if (map) {
+                setTimeout(() => { map.invalidateSize(); }, 0);
+            }
+        }
+        
+        /**
+         * Muestra la vista de Escaneo QR y oculta las demás.
+         */
+        window.showQRScannerView = function() {
+            mapContainerEl.style.display = 'none';
+            detailViewEl.style.display = 'none';
+            profileViewEl.style.display = 'none'; // Ocultar perfil
+            qrScanViewEl.style.display = 'block';
+            qrCodeInput.value = ''; 
+            document.getElementById('qr-status-message').textContent = '';
+        }
+
+        /**
+         * Muestra la vista de Perfil y oculta las demás. (Nuevo)
+         */
+        window.showProfileView = function() {
+            mapContainerEl.style.display = 'none';
+            detailViewEl.style.display = 'none';
+            qrScanViewEl.style.display = 'none';
+            profileViewEl.style.display = 'block';
+            
+            loadUserProfile(); // Asegurarse de que los datos estén actualizados
+        }
+
+        // -------------------------------------------------------------------
+        // MAP & MARKERS LOGIC (Ligeramente acortado para enfocarse en la vista)
+        // -------------------------------------------------------------------
+
+        function initMap() {
+            const fusaCoords = [4.34, -74.38]; 
+            const zoomLevel = 13;
+
+            if (map) { map.remove(); }
+
+            map = L.map('map').setView(fusaCoords, zoomLevel);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19,
+            }).addTo(map);
+        }
+
+        async function loadCafeterias() {
+            if (!db || !map) return;
+            // ... Lógica de carga y renderizado de marcadores ...
+            try {
+                const cafeteriasCollectionRef = collection(db, "artifacts", appId, "public", "data", "cafeterias");
+                const querySnapshot = await getDocs(cafeteriasCollectionRef);
+                
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.nombre && data.latitud && data.longitud) {
+                        const cafe = { 
+                            id: doc.id, 
+                            nombre: data.nombre, 
+                            latitud: parseFloat(data.latitud), 
+                            longitud: parseFloat(data.longitud) 
+                        };
+                        const popupContent = `
+                            <div class="p-2 font-inter">
+                                <h3 class="text-lg font-semibold text-amber-800">${cafe.nombre}</h3>
+                                <p class="text-sm text-gray-600 mb-2">ID: ${cafe.id}</p>
+                                <button onclick="verDetalles('${cafe.id}')" 
+                                    class="w-full bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium py-1 px-3 rounded-md transition duration-150 shadow-md">
+                                    Ver Detalles
+                                </button>
+                            </div>
+                        `;
+                        L.marker([cafe.latitud, cafe.longitud])
+                            .addTo(map)
+                            .bindPopup(popupContent, { closeButton: false, className: 'custom-popup-client' });
+                    }
+                });
+            } catch (error) {
+                console.error("Error al cargar las cafeterías:", error);
+            }
+        }
+
+
+        // -------------------------------------------------------------------
+        // VISIT REGISTRATION LOGIC
+        // -------------------------------------------------------------------
+
+        window.registerVisit = async function() {
+            // ... Lógica de registro de visita ...
+            const cafeteriaId = qrCodeInput.value.trim();
+            const statusMessageEl = document.getElementById('qr-status-message');
+            statusMessageEl.textContent = '';
+
+            if (!auth.currentUser || !auth.currentUser.uid) {
+                statusMessageEl.className = 'mt-4 text-sm font-medium text-red-500';
+                statusMessageEl.textContent = 'Error: Debes iniciar sesión para registrar una visita.';
+                return;
+            }
+
+            if (cafeteriaId.length < 10) { 
+                statusMessageEl.className = 'mt-4 text-sm font-medium text-red-500';
+                statusMessageEl.textContent = 'Código QR inválido. Debe ser el ID de la cafetería.';
+                return;
+            }
+
+            statusMessageEl.className = 'mt-4 text-sm font-medium text-blue-500';
+            statusMessageEl.textContent = 'Verificando y registrando visita...';
+
+            try {
+                const cafeDocRef = doc(db, "artifacts", appId, "public", "data", "cafeterias", cafeteriaId);
+                const cafeDoc = await getDoc(cafeDocRef);
+
+                if (!cafeDoc.exists()) {
+                    statusMessageEl.className = 'mt-4 text-sm font-medium text-red-500';
+                    statusMessageEl.textContent = `Error: La cafetería con ID "${cafeteriaId}" no fue encontrada.`;
+                    return;
+                }
+                
+                const newVisit = {
+                    cafeteria_id: cafeteriaId,
+                    cliente_id: userId,
+                    fecha_visita: new Date(),
+                    cafeteria_nombre: cafeDoc.data().nombre || 'Cafetería Registrada',
+                };
+
+                const visitsCollectionRef = collection(db, "artifacts", appId, "public", "data", "visitas");
+                await addDoc(visitsCollectionRef, newVisit);
+
+                statusMessageEl.className = 'mt-4 text-sm font-medium text-green-600';
+                statusMessageEl.textContent = `¡Visita registrada con éxito en ${newVisit.cafeteria_nombre}!`;
+                
+                qrCodeInput.value = ''; 
+                
+                alertPlaceholder('¡Visita registrada! Ganaste un punto de fidelidad.', 'success');
+                // Forzar actualización del perfil después de la visita
+                loadUserProfile(); 
+
+            } catch (error) {
+                console.error("Error al registrar la visita:", error);
+                statusMessageEl.className = 'mt-4 text-sm font-medium text-red-500';
+                statusMessageEl.textContent = 'Error al registrar la visita. Verifica la conexión.';
+            }
+        }
+
+        // -------------------------------------------------------------------
+        // PROFILE & LOYALTY LOGIC (NUEVO)
+        // -------------------------------------------------------------------
+
+        /**
+         * @function loadUserProfile
+         * Carga el historial de visitas y calcula los puntos de fidelidad.
+         */
+        async function loadUserProfile() {
+            if (!db || !userId) {
+                profileUserIdEl.textContent = 'Autenticación pendiente...';
+                return;
+            }
+
+            profileUserIdEl.textContent = userId;
+            profileRecentVisitsEl.innerHTML = '<p class="text-amber-600">Cargando datos...</p>';
+
+            try {
+                const visitsRef = collection(db, "artifacts", appId, "public", "data", "visitas");
+                const q = query(visitsRef, where("cliente_id", "==", userId));
+                
+                // Usamos onSnapshot para mantener el perfil en tiempo real (si cambia en otra pestaña/dispositivo)
+                onSnapshot(q, (snapshot) => {
+                    const visits = [];
+                    snapshot.forEach(doc => {
+                        visits.push(doc.data());
+                    });
+
+                    // 1. Cálculo de Puntos
+                    const totalVisits = visits.length;
+                    const rewards = Math.floor(totalVisits / 10); // 1 recompensa por cada 10 visitas
+
+                    profileTotalVisitsEl.textContent = totalVisits;
+                    profileRewardsEl.textContent = rewards;
+
+                    // 2. Renderizado del Historial
+                    if (totalVisits === 0) {
+                        profileRecentVisitsEl.innerHTML = '<p class="text-gray-500 italic">Aún no has registrado ninguna visita. ¡Busca un QR!</p>';
+                    } else {
+                        // Ordenar por fecha (más reciente primero)
+                        visits.sort((a, b) => (b.fecha_visita.seconds || b.fecha_visita.getTime()/1000) - (a.fecha_visita.seconds || a.fecha_visita.getTime()/1000));
+                        
+                        let html = '';
+                        visits.slice(0, 10).forEach(visit => { // Mostrar solo las 10 más recientes
+                            const dateObj = visit.fecha_visita.seconds 
+                                ? new Date(visit.fecha_visita.seconds * 1000) 
+                                : new Date();
+                            const dateStr = dateObj.toLocaleString('es-CO');
+
+                            html += `
+                                <div class="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-md">
+                                    <p class="font-semibold text-gray-700">${visit.cafeteria_nombre || 'Cafetería Desconocida'}</p>
+                                    <span class="text-sm text-gray-500">${dateStr}</span>
+                                </div>
+                            `;
+                        });
+                        if (totalVisits > 10) {
+                             html += `<p class="text-sm text-center text-gray-400 mt-2">... y ${totalVisits - 10} visitas más</p>`;
+                        }
+                        profileRecentVisitsEl.innerHTML = html;
+                    }
+                }, (error) => {
+                    console.error("Error al escuchar visitas del perfil:", error);
+                    profileRecentVisitsEl.innerHTML = '<p class="text-red-500">Error al cargar el historial de visitas.</p>';
+                });
+
+            } catch (error) {
+                console.error("Error general al cargar perfil:", error);
+                profileRecentVisitsEl.innerHTML = '<p class="text-red-500">Ocurrió un error inesperado al cargar tu perfil.</p>';
+            }
+        }
+
+
+        // -------------------------------------------------------------------
+        // DETAIL VIEW LOGIC (No modificado, solo reubicado)
+        // -------------------------------------------------------------------
+
+        window.verDetalles = async function(cafeteriaId) {
+            currentCafeId = cafeteriaId;
+            
+            mapContainerEl.style.display = 'none';
+            qrScanViewEl.style.display = 'none';
+            profileViewEl.style.display = 'none';
+            detailViewEl.style.display = 'block';
+            
+            // Re-renderizar el detalle (contenido original de las tabs)
+            document.getElementById('detail-content').innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-amber-800" id="cafe-nombre">Cargando...</h2>
+                    <p class="text-gray-500 mb-6" id="cafe-direccion"></p>
+                </div>
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8" id="tabs">
+                        <button class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors text-amber-600 border-amber-600" data-target="info-tab">Información</button>
+                        <button class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="menu-tab">Menú</button>
+                        <button class="tab-button py-2 px-1 border-b-2 font-medium text-sm transition-colors text-gray-500 hover:text-gray-700 hover:border-gray-300" data-target="reviews-tab">Valoraciones</button>
+                    </nav>
+                </div>
+                <div id="info-tab" class="tab-content"><h3 class="text-xl font-bold text-gray-700 mb-3 border-b pb-2">Descripción</h3><p class="text-gray-600" id="cafe-descripcion">Cargando...</p></div>
+                <div id="menu-tab" class="tab-content hidden"><h3 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Menú de Platos</h3><div id="menu-list" class="space-y-4"><p class="text-gray-500">Cargando menú...</p></div></div>
+                <div id="reviews-tab" class="tab-content hidden"><h3 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Valoraciones de Clientes</h3><div class="bg-amber-50 p-4 rounded-lg mb-6 shadow-inner"><h4 class="font-semibold text-amber-800 mb-2">Deja tu Valoración</h4><div class="flex items-center space-x-2 mb-3"><span class="text-sm font-medium text-gray-700">Puntuación:</span><div id="rating-stars" class="star-rating flex"></div></div><textarea id="review-comment" class="w-full p-2 border border-gray-300 rounded-md focus:ring-amber-500 focus:border-amber-500 resize-none" rows="3" placeholder="Escribe tu comentario..."></textarea><button id="submit-review-btn" class="mt-3 bg-amber-600 hover:bg-amber-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 w-full md:w-auto">Enviar Valoración</button></div><div id="reviews-list" class="space-y-4"><p class="text-gray-500">Cargando valoraciones...</p></div></div>
+            `;
+            
+            // Re-mapear referencias del DOM para la nueva estructura
+            const cafeNombreEl = document.getElementById('cafe-nombre');
+            const cafeDireccionEl = document.getElementById('cafe-direccion');
+            const cafeDescripcionEl = document.getElementById('cafe-descripcion');
+            const menuListEl = document.getElementById('menu-list');
+            const reviewsListEl = document.getElementById('reviews-list');
+            const newSubmitReviewBtn = document.getElementById('submit-review-btn');
+            const newRatingStarsContainer = document.getElementById('rating-stars');
+            
+            // 3. Cargar Información
+            try {
+                const cafeDocRef = doc(db, "artifacts", appId, "public", "data", "cafeterias", cafeteriaId);
+                const cafeDoc = await getDoc(cafeDocRef);
+
+                if (cafeDoc.exists()) {
+                    const cafeData = cafeDoc.data();
+                    cafeNombreEl.textContent = cafeData.nombre || 'Cafetería Desconocida';
+                    cafeDireccionEl.textContent = cafeData.direccion || 'Dirección no disponible';
+                    cafeDescripcionEl.textContent = cafeData.descripcion || 'Sin descripción detallada.';
+                } else {
+                    cafeNombreEl.textContent = 'Cafetería no encontrada';
+                }
+            } catch (error) {
+                console.error("Error al obtener detalles de la cafetería:", error);
+            }
+            
+            // 4. Cargar Menú y Valoraciones
+            loadMenu(cafeteriaId, menuListEl);
+            setupReviews(cafeteriaId, newRatingStarsContainer, newSubmitReviewBtn, reviewsListEl); 
+            setupTabs();
+        }
+        
+        function loadMenu(cafeteriaId, menuListEl) {
+             const menuRef = collection(db, "artifacts", appId, "public", "data", "menus");
+            const q = query(menuRef, where("cafeteria_id", "==", cafeteriaId));
+            
+            onSnapshot(q, (snapshot) => {
+                let html = '';
+                if (snapshot.empty) {
+                    html = '<p class="text-gray-500 italic">Esta cafetería aún no ha cargado su menú.</p>';
+                } else {
+                    snapshot.forEach(doc => {
+                        const plato = doc.data();
+                        html += `
+                            <div class="flex justify-between items-start border-b border-gray-100 pb-3">
+                                <div>
+                                    <p class="font-semibold text-gray-800">${plato.nombre_plato || 'Plato sin nombre'}</p>
+                                    <p class="text-sm text-gray-500">${plato.descripcion || 'Sin descripción.'}</p>
+                                </div>
+                                <span class="text-lg font-bold text-amber-600 ml-4">$${(plato.precio || 0).toLocaleString('es-CO')}</span>
+                            </div>
+                        `;
+                    });
+                }
+                menuListEl.innerHTML = html;
+            }, (error) => {
+                console.error("Error al escuchar el menú:", error);
+                menuListEl.innerHTML = '<p class="text-red-500">Error al cargar el menú.</p>';
+            });
+        }
+        
+        function setupReviews(cafeteriaId, ratingStarsContainer, submitReviewBtn, reviewsListEl) {
+            // Re-renderizar y re-adjuntar eventos
+            let localUserRating = 0;
+            
+            function renderStars() {
+                ratingStarsContainer.innerHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    const star = document.createElement('span');
+                    star.className = 'star';
+                    star.textContent = '★';
+                    star.dataset.value = i;
+                    star.onclick = () => selectStars(i);
+                    ratingStarsContainer.appendChild(star);
+                }
+                selectStars(0); 
+            }
+            
+            function selectStars(rating) {
+                localUserRating = rating;
+                const stars = ratingStarsContainer.querySelectorAll('.star');
+                stars.forEach(star => {
+                    star.classList.toggle('filled', parseInt(star.dataset.value) <= rating);
+                });
+            }
+
+            async function submitReviewInternal() {
+                const comentario = document.getElementById('review-comment').value.trim();
+
+                if (!auth.currentUser || !userId) { alertPlaceholder('Debes estar autenticado para dejar una valoración.', 'error'); return; }
+                if (localUserRating === 0) { alertPlaceholder('Por favor, selecciona una puntuación (1 a 5 estrellas).', 'error'); return; }
+                if (comentario.length < 10) { alertPlaceholder('El comentario es muy corto. Debe tener al menos 10 caracteres.', 'error'); return; }
+
+                try {
+                    const newReview = {
+                        cliente_id: userId, 
+                        cafeteria_id: cafeteriaId,
+                        puntuacion: localUserRating,
+                        comentario: comentario,
+                        fecha: new Date(),
+                    };
+
+                    const reviewsCollectionRef = collection(db, "artifacts", appId, "public", "data", "valoraciones");
+                    await addDoc(reviewsCollectionRef, newReview);
+
+                    alertPlaceholder('¡Valoración enviada con éxito!', 'success');
+                    document.getElementById('review-comment').value = '';
+                    selectStars(0);
+                } catch (error) {
+                    console.error("Error al guardar la valoración:", error);
+                    alertPlaceholder('Error al enviar la valoración. Intenta de nuevo.', 'error');
+                }
+            }
+            
+            renderStars();
+            submitReviewBtn.onclick = submitReviewInternal; 
+
+            // Cargar Valoraciones Existentes
+            const reviewsRef = collection(db, "artifacts", appId, "public", "data", "valoraciones");
+            const q = query(reviewsRef, where("cafeteria_id", "==", cafeteriaId));
+            
+            onSnapshot(q, (snapshot) => {
+                let html = '';
+                if (snapshot.empty) {
+                    html = '<p class="text-gray-500 italic">Sé el primero en dejar una valoración.</p>';
+                } else {
+                    snapshot.forEach(doc => {
+                        const review = doc.data();
+                        const date = review.fecha ? new Date(review.fecha.seconds * 1000).toLocaleDateString('es-CO') : 'Fecha desconocida';
+                        const stars = '<span class="text-amber-500">' + '★'.repeat(review.puntuacion) + '</span>' + '☆'.repeat(5 - review.puntuacion);
+
+                        html += `
+                            <div class="p-4 bg-gray-50 rounded-lg shadow-sm">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-gray-800">Cliente ${review.cliente_id.substring(0, 6)}...</span>
+                                    <span class="text-sm text-gray-500">${date}</span>
+                                </div>
+                                <div class="mb-2">${stars}</div>
+                                <p class="text-gray-600 italic">"${review.comentario}"</p>
+                            </div>
+                        `;
+                    });
+                }
+                reviewsListEl.innerHTML = html;
+            }, (error) => {
+                console.error("Error al escuchar valoraciones:", error);
+                reviewsListEl.innerHTML = '<p class="text-red-500">Error al cargar las valoraciones.</p>';
+            });
+        }
+
+        function setupTabs() {
+            // Lógica para alternar entre tabs
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.onclick = (e) => {
+                    const targetId = e.target.dataset.target;
+
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('text-amber-600', 'border-amber-600');
+                        btn.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                    });
+                    e.target.classList.add('text-amber-600', 'border-amber-600');
+                    e.target.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(targetId).classList.remove('hidden');
+                };
+            });
+        }
+        
+        // -------------------------------------------------------------------
+        // UTILITIES
+        // -------------------------------------------------------------------
+        
+        /**
+         * Reemplazo para alert() (Regla de Codificación)
+         */
+        function alertPlaceholder(message, type) {
+            let container = document.body;
+            let alertBox = document.createElement('div');
+            
+            let baseClasses = "fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-xl font-bold z-50 transition-opacity duration-300";
+            let typeClasses = {
+                'info': 'bg-blue-500 text-white',
+                'error': 'bg-red-500 text-white',
+                'success': 'bg-green-500 text-white'
+            }[type] || 'bg-gray-700 text-white';
+
+            alertBox.className = baseClasses + ' ' + typeClasses + ' opacity-100'; 
+            alertBox.textContent = message;
+            
+            container.appendChild(alertBox);
+
+            setTimeout(() => {
+                alertBox.classList.remove('opacity-100');
+                alertBox.classList.add('opacity-0');
+                setTimeout(() => alertBox.remove(), 300);
+            }, 3000);
+        }
+
+
+        // -------------------------------------------------------------------
+        // START APPLICATION
+        // -------------------------------------------------------------------
+        window.onload = initFirebaseAndAuth;
+
+    </script>
+</body>
+</html>
