@@ -65,6 +65,38 @@
             margin-bottom: 1rem;
         }
         
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
         .acciones-rapidas {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -106,7 +138,7 @@
         }
         
         .tarjeta-certificado {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
             color: white;
         }
         
@@ -234,18 +266,6 @@
             color: #333;
         }
         
-        #video-container {
-            width: 100%;
-            margin: 1rem 0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        #qr-video {
-            width: 100%;
-            height: auto;
-        }
-        
         .boton-primario {
             background: linear-gradient(135deg, #6B4423 0%, #3E2723 100%);
             color: white;
@@ -261,6 +281,20 @@
         
         .boton-primario:hover {
             transform: scale(1.05);
+        }
+        
+        .input-qr {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .input-qr:focus {
+            outline: none;
+            border-color: #6B4423;
         }
         
         .alerta {
@@ -301,6 +335,26 @@
         <div class="hero-section">
             <h2>¡Bienvenido al Recorrido Cafetero! ☕</h2>
             <p>Descubre las mejores cafeterías de Fusagasugá y obtén tu certificado</p>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🚶</div>
+                    <div class="stat-value">{{ stats.get('total_visitas', 0) }}</div>
+                    <div class="stat-label">Visitas Totales</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">☕</div>
+                    <div class="stat-value">{{ stats.get('cafeterias_visitadas', 0) }}</div>
+                    <div class="stat-label">Cafeterías Visitadas</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value">{{ stats.get('puntos_fidelidad', 0) }}</div>
+                    <div class="stat-label">Puntos de Fidelidad</div>
+                </div>
+            </div>
         </div>
         
         <div class="acciones-rapidas">
@@ -313,7 +367,7 @@
             <a href="{{ url_for('verificar_progreso_certificado') }}" class="tarjeta-accion tarjeta-certificado">
                 <div class="icono">🏆</div>
                 <h3>Mi Certificado</h3>
-                <p>{% if tiene_certificado %}¡Descargar certificado!{% else %}Ver progreso{% endif %}</p>
+                <p>Ver progreso y descargar</p>
             </a>
             
             <a href="{{ url_for('index') }}" class="tarjeta-accion">
@@ -326,15 +380,14 @@
         <div class="seccion-visitas">
             <h2>📍 Tus Visitas Recientes</h2>
             
-            {% if visitas %}
+            {% if stats.get('visitas_recientes') and stats.visitas_recientes|length > 0 %}
             <div class="lista-visitas">
-                {% for visita in visitas %}
+                {% for visita in stats.visitas_recientes %}
                 <div class="visita-item">
                     <div class="visita-icono">☕</div>
                     <div class="visita-info">
-                        <h3>{{ visita['nombre'] }}</h3>
-                        <p>📍 {{ visita['direccion'] }}</p>
-                        <p>📅 {{ visita['fecha_visita'].strftime('%d/%m/%Y %H:%M') }}</p>
+                        <h3>{{ visita.nombre }}</h3>
+                        <p>📅 {{ visita.fecha_visita.strftime('%d/%m/%Y %H:%M') if visita.fecha_visita else 'Fecha desconocida' }}</p>
                     </div>
                     <div class="badge">✓ Visitada</div>
                 </div>
@@ -360,121 +413,67 @@
             
             <div class="alerta" id="alerta-qr"></div>
             
-            <div id="video-container">
-                <video id="qr-video" autoplay playsinline></video>
-            </div>
-            
             <p style="text-align: center; color: #666; margin: 1rem 0;">
-                Enfoca el código QR de la cafetería
+                Ingresa el ID de la cafetería que aparece en el código QR
             </p>
             
-            <button class="boton-primario" onclick="cerrarEscaner()">
+            <input type="text" id="qr-code-input" class="input-qr" placeholder="Ejemplo: 12">
+            
+            <button class="boton-primario" onclick="registrarVisita()">
+                Registrar Visita
+            </button>
+            
+            <button class="boton-primario" onclick="cerrarEscaner()" style="background: #999; margin-top: 1rem;">
                 Cancelar
             </button>
         </div>
     </div>
     
-    <!-- Librería para escanear QR -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-    
     <script>
-        let stream = null;
-        let scanning = false;
-        
         function abrirEscaner() {
             const modal = document.getElementById('modal-qr');
             modal.classList.add('activo');
-            iniciarCamara();
+            document.getElementById('qr-code-input').focus();
         }
         
         function cerrarEscaner() {
             const modal = document.getElementById('modal-qr');
             modal.classList.remove('activo');
-            detenerCamara();
+            document.getElementById('qr-code-input').value = '';
+            document.getElementById('alerta-qr').classList.remove('activa');
         }
         
-        async function iniciarCamara() {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
-                const video = document.getElementById('qr-video');
-                video.srcObject = stream;
-                scanning = true;
-                escanearFrame();
-            } catch (err) {
-                mostrarAlerta('error', 'No se pudo acceder a la cámara');
-                console.error('Error al acceder a la cámara:', err);
-            }
-        }
-        
-        function detenerCamara() {
-            scanning = false;
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-        }
-        
-        function escanearFrame() {
-            if (!scanning) return;
+        async function registrarVisita() {
+            const codigoQR = document.getElementById('qr-code-input').value.trim();
+            const alertaEl = document.getElementById('alerta-qr');
             
-            const video = document.getElementById('qr-video');
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                
-                if (code) {
-                    procesarCodigoQR(code.data);
-                    return;
-                }
-            }
-            
-            requestAnimationFrame(escanearFrame);
-        }
-        
-        async function procesarCodigoQR(data) {
-            // Extraer el código del formato "cafeteria:CODIGO"
-            const partes = data.split(':');
-            if (partes.length !== 2 || partes[0] !== 'cafeteria') {
-                mostrarAlerta('error', 'Código QR no válido');
-                setTimeout(() => { scanning = true; escanearFrame(); }, 2000);
+            if (!codigoQR) {
+                mostrarAlerta('error', 'Por favor ingresa el código QR');
                 return;
             }
             
-            const codigo = partes[1];
-            scanning = false; // Detener escaneo mientras procesamos
-            
             try {
-                const formData = new FormData();
-                formData.append('codigo_qr', codigo);
-                
-                const response = await fetch('{{ url_for("escanear_qr") }}', {
+                const response = await fetch('/api/escanear-qr', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ codigo_qr: codigoQR })
                 });
                 
-                const result = await response.json();
+                const data = await response.json();
                 
-                if (result.success) {
-                    mostrarAlerta('exito', result.message);
+                if (data.success) {
+                    mostrarAlerta('exito', data.message);
                     setTimeout(() => {
                         location.reload();
                     }, 2000);
                 } else {
-                    mostrarAlerta('error', result.message);
-                    setTimeout(() => { scanning = true; escanearFrame(); }, 2000);
+                    mostrarAlerta('error', data.message);
                 }
             } catch (error) {
-                mostrarAlerta('error', 'Error al procesar el código QR');
-                setTimeout(() => { scanning = true; escanearFrame(); }, 2000);
+                console.error('Error:', error);
+                mostrarAlerta('error', 'Error al procesar la solicitud');
             }
         }
         
@@ -482,11 +481,14 @@
             const alerta = document.getElementById('alerta-qr');
             alerta.className = `alerta ${tipo} activa`;
             alerta.textContent = mensaje;
-            
-            setTimeout(() => {
-                alerta.classList.remove('activa');
-            }, 5000);
         }
+        
+        // Permitir registrar con Enter
+        document.getElementById('qr-code-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                registrarVisita();
+            }
+        });
     </script>
 </body>
 </html>
