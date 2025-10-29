@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descuentos - {{ cafeteria.nombre }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-600">
+                🎁 Descuentos de: <span class="text-gray-800">{{ cafeteria.nombre }}</span>
+            </h1>
+            <nav class="flex items-center space-x-4">
+                <a href="{{ url_for('admin_dashboard') }}" class="text-gray-600 hover:text-blue-600">Volver al Dashboard</a>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Cerrar Sesión</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {% if mensaje %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
+            ✅ {{ mensaje }}
+        </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+            ❌ {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="grid md:grid-cols-3 gap-8">
+            
+            <!-- Formulario Crear Descuento -->
+            <div class="md:col-span-1 bg-white p-6 rounded-xl shadow-lg h-min sticky top-4">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">🎁 Nuevo Descuento</h2>
+                
+                <form method="POST" action="{{ url_for('crear_descuento', cafeteria_id=cafeteria_id) }}" class="space-y-4">
+                    <div>
+                        <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre del Descuento</label>
+                        <input type="text" 
+                               id="nombre" 
+                               name="nombre" 
+                               placeholder="Ej: 2x1 en Cafés"
+                               required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label for="porcentaje_descuento" class="block text-sm font-medium text-gray-700">Porcentaje de Descuento (%)</label>
+                        <input type="number" 
+                               id="porcentaje_descuento" 
+                               name="porcentaje_descuento" 
+                               min="1" 
+                               max="100" 
+                               placeholder="Ej: 20"
+                               required 
+                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <p class="text-xs text-gray-500 mt-1">Entre 1% y 100%</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="fecha_inicio" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
+                            <input type="date" 
+                                   id="fecha_inicio" 
+                                   name="fecha_inicio" 
+                                   required 
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+
+                        <div>
+                            <label for="fecha_fin" class="block text-sm font-medium text-gray-700">Fecha Fin</label>
+                            <input type="date" 
+                                   id="fecha_fin" 
+                                   name="fecha_fin" 
+                                   required 
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                        <p class="text-xs text-yellow-700">
+                            💡 <strong>Tip:</strong> Los descuentos se mostrarán automáticamente a los clientes durante el período seleccionado.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="w-full py-2 px-4 rounded-lg text-white bg-green-600 hover:bg-green-700 font-semibold transition">
+                        ✅ Crear Descuento
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de Descuentos -->
+            <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                    Descuentos Activos ({{ descuentos | length }})
+                </h2>
+
+                {% if descuentos %}
+                <div class="space-y-4">
+                    {% for descuento in descuentos %}
+                    <div class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 transition {% if descuento.fecha_fin < now().date() %}bg-gray-50 opacity-60{% else %}bg-white{% endif %}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-bold text-gray-800">{{ descuento.nombre }}</h3>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gradient-to-r from-green-400 to-green-600 text-white">
+                                        {{ descuento.porcentaje_descuento }}% OFF
+                                    </span>
+                                </div>
+
+                                <div class="flex gap-4 text-sm text-gray-600">
+                                    <div class="flex items-center gap-1">
+                                        <span>📅</span>
+                                        <span>Desde: {{ descuento.fecha_inicio.strftime('%d/%m/%Y') if descuento.fecha_inicio else 'N/A' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span>🏁</span>
+                                        <span>Hasta: {{ descuento.fecha_fin.strftime('%d/%m/%Y') if descuento.fecha_fin else 'N/A' }}</span>
+                                    </div>
+                                </div>
+
+                                {% if descuento.fecha_fin < now().date() %}
+                                <div class="mt-2 text-sm text-red-600 font-semibold">
+                                    ⚠️ Descuento expirado
+                                </div>
+                                {% elif descuento.fecha_inicio > now().date() %}
+                                <div class="mt-2 text-sm text-blue-600 font-semibold">
+                                    ⏳ Próximamente activo
+                                </div>
+                                {% else %}
+                                <div class="mt-2 text-sm text-green-600 font-semibold">
+                                    ✅ Activo ahora
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="flex gap-2 ml-4">
+                                <a href="{{ url_for('editar_descuento', id=descuento.id) }}" 
+                                   class="px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-semibold transition">
+                                    ✏️ Editar
+                                </a>
+                                <form method="POST" action="{{ url_for('eliminar_descuento', id=descuento.id) }}" 
+                                      onsubmit="return confirm('¿Seguro que quieres eliminar este descuento?');">
+                                    <button type="submit" 
+                                            class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition">
+                                        🗑️ Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="text-6xl mb-4">🎁</div>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay descuentos creados</h3>
+                    <p class="text-gray-500">Crea tu primer descuento usando el formulario de la izquierda</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Validación de fechas
+        const fechaInicio = document.getElementById('fecha_inicio');
+        const fechaFin = document.getElementById('fecha_fin');
+
+        fechaInicio.addEventListener('change', function() {
+            fechaFin.min = this.value;
+        });
+
+        fechaFin.addEventListener('change', function() {
+            if (this.value < fechaInicio.value) {
+                alert('La fecha de fin debe ser posterior a la fecha de inicio');
+                this.value = '';
+            }
+        });
+
+        // Establecer fecha mínima como hoy
+        const today = new Date().toISOString().split('T')[0];
+        fechaInicio.min = today;
+    </script>
+
+</body>
+</html>
