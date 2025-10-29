@@ -1,6 +1,6 @@
 # app.py
 
-from flask import Flask, render_template, request, redirect, url_for, session, g, send_file, flash
+from flask import Flask, jsonify, render_template, request, redirect, url_for, session, g, send_file, flash
 import pymysql.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
@@ -1088,6 +1088,95 @@ def cliente_dashboard():
                          error=error,
                          session=session)
 
+# ============================================
+# --- SISTEMA DE ESCANEO QR PARA CLIENTES ---
+# ============================================
+
+@app.route('/api/escanear-qr', methods=['POST'])
+def escanear_qr():
+    """API para escanear QR desde el dashboard del cliente"""
+    # Verificar que el usuario esté logueado
+    if 'user_id' not in session or session.get('rol') != 'cliente':
+        return jsonify({
+            'success': False,
+            'message': 'Debes iniciar sesión como cliente'
+        }), 401
+    
+    try:
+        data = request.get_json()
+        codigo_qr = data.get('codigo_qr', '').strip()
+        
+        if not codigo_qr:
+            return jsonify({
+                'success': False,
+                'message': 'Código QR vacío'
+            }), 400
+        
+        cliente_id = session['user_id']
+        conn = get_db_connection()
+        
+        if conn == False:
+            return jsonify({
+                'success': False,
+                'message': 'Error de conexión a la base de datos'
+            }), 500
+        
+        try:
+            with conn.cursor() as cursor:
+                # Verificar que la cafetería existe
+                cursor.execute("SELECT id, nombre FROM cafeterias WHERE id = %s", (codigo_qr,))
+                cafeteria = cursor.fetchone()
+                
+                if not cafeteria:
+                    return jsonify({
+                        'success': False,
+                        'message': 'Código QR inválido. Cafetería no encontrada.'
+                    }), 404
+                
+                # Verificar si ya visitó hoy
+                cursor.execute("""
+                    SELECT id FROM visitas 
+                    WHERE cliente_id = %s 
+                    AND cafeteria_id = %s 
+                    AND DATE(fecha_visita) = CURDATE()
+                """, (cliente_id, codigo_qr))
+                
+                if cursor.fetchone():
+                    return jsonify({
+                        'success': False,
+                        'message': f'Ya registraste una visita a {cafeteria["nombre"]} hoy.'
+                    }), 400
+                
+                # Registrar la visita
+                cursor.execute("""
+                    INSERT INTO visitas (cliente_id, cafeteria_id, fecha_visita)
+                    VALUES (%s, %s, NOW())
+                """, (cliente_id, codigo_qr))
+                
+                conn.commit()
+                
+                # Contar visitas totales
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT cafeteria_id) as visitadas
+                    FROM visitas WHERE cliente_id = %s
+                """, (cliente_id,))
+                visitadas = cursor.fetchone()['visitadas']
+                
+                return jsonify({
+                    'success': True,
+                    'message': f'¡Visita registrada en {cafeteria["nombre"]}! +1 punto',
+                    'visitadas': visitadas
+                })
+                
+        finally:
+            conn.close()
+            
+    except Exception as e:
+        print(f"Error en escanear_qr: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error al procesar el código QR'
+        }), 500
 
 # ============================================
 # --- SISTEMA DE QR PARA ADMIN ---

@@ -40,7 +40,7 @@ def generar_certificado(nombre_completo, fecha_emision, codigo_certificado, outp
     c.setLineWidth(1.5)
     c.roundRect(0.5*inch, 0.5*inch, width-1*inch, height-1*inch, 12, stroke=1, fill=0)
     
-    # Esquinas decorativas (opcional, simulando el diseño)
+    # Esquinas decorativas
     c.setLineWidth(2)
     esquina_size = 0.3*inch
     # Esquina superior izquierda
@@ -91,38 +91,99 @@ def generar_certificado(nombre_completo, fecha_emision, codigo_certificado, outp
     fusagasuga_width = c.stringWidth(fusagasuga_texto, "Helvetica-Bold", 32)
     c.drawString((width - fusagasuga_width) / 2, height - 4.9*inch, fusagasuga_texto)
     
-    # Agregar logos (simulados con círculos - reemplazar con imágenes reales)
-    c.setFillColor(color_verde_oscuro)
+    # ========================================
+    # INSERTAR IMÁGENES (LOGOS)
+    # ========================================
     
-    # Logo izquierdo - Denominación de Origen
+    # Rutas de las imágenes
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_colombia_path = os.path.join(base_dir, 'static', 'images', 'colombia_cert.png')
+    logo_fusita_path = os.path.join(base_dir, 'static', 'images', 'fusita.png')
+    
+    # Logo izquierdo - Denominación de Origen (Colombia)
     logo_left_x = 1.5*inch
-    logo_y = height - 5.5*inch
-    c.circle(logo_left_x, logo_y, 0.8*inch, stroke=1, fill=0)
-    c.setFont("Helvetica-Bold", 10)
-    c.setFillColor(color_marron)
-    c.drawCentredString(logo_left_x, logo_y + 0.3*inch, "DENOMINACIÓN")
-    c.drawCentredString(logo_left_x, logo_y + 0.15*inch, "DE ORIGEN")
-    c.drawCentredString(logo_left_x, logo_y, "PROTEGIDA")
-    c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(logo_left_x, logo_y - 0.5*inch, "CO")
-    c.setFont("Helvetica", 10)
-    c.drawCentredString(logo_left_x, logo_y - 0.65*inch, "COLOMBIA")
+    logo_y = height - 5.8*inch
+    logo_size = 4*inch  # Tamaño del logo
     
-    # Logo derecho - Escudo de Fusagasugá (simulado)
+    if os.path.exists(logo_colombia_path):
+        try:
+            # Insertar imagen centrada
+            c.drawImage(
+                logo_colombia_path, 
+                logo_left_x - logo_size/2,  # Centrar horizontalmente
+                logo_y - logo_size/2,        # Centrar verticalmente
+                width=logo_size, 
+                height=logo_size,
+                preserveAspectRatio=True,
+                mask='auto'
+            )
+        except Exception as e:
+            print(f"Error al cargar logo Colombia: {e}")
+            # Fallback: dibujar círculo si falla la imagen
+            c.setFillColor(color_verde_oscuro)
+            c.circle(logo_left_x, logo_y, 0.8*inch, stroke=1, fill=0)
+            c.setFont("Helvetica-Bold", 10)
+            c.setFillColor(color_marron)
+            c.drawCentredString(logo_left_x, logo_y, "COLOMBIA")
+    else:
+        print(f"Advertencia: No se encontró {logo_colombia_path}")
+        # Fallback: dibujar círculo
+        c.setFillColor(color_verde_oscuro)
+        c.circle(logo_left_x, logo_y, 0.8*inch, stroke=1, fill=0)
+        c.setFont("Helvetica-Bold", 10)
+        c.setFillColor(color_marron)
+        c.drawCentredString(logo_left_x, logo_y, "COLOMBIA")
+    
+    # Logo derecho - Escudo de Fusagasugá
     logo_right_x = width - 1.5*inch
-    c.setFillColor(color_verde_oscuro)
-    c.circle(logo_right_x, logo_y, 0.8*inch, stroke=1, fill=0)
-    c.setFont("Helvetica-Bold", 9)
-    c.setFillColor(color_marron)
-    c.drawCentredString(logo_right_x, logo_y + 0.2*inch, "ESCUDO DE")
-    c.drawCentredString(logo_right_x, logo_y, "FUSAGASUGÁ")
-    c.setFont("Helvetica", 8)
-    c.drawCentredString(logo_right_x, logo_y - 0.6*inch, "CIUDAD JARDÍN")
     
-    # Información adicional en la parte inferior
+    if os.path.exists(logo_fusita_path):
+        try:
+            # Insertar imagen centrada
+            c.drawImage(
+                logo_fusita_path, 
+                logo_right_x - logo_size/2,  # Centrar horizontalmente
+                logo_y - logo_size/2,        # Centrar verticalmente
+                width=logo_size, 
+                height=logo_size,
+                preserveAspectRatio=True,
+                mask='auto'
+            )
+        except Exception as e:
+            print(f"Error al cargar logo Fusagasugá: {e}")
+            # Fallback: dibujar círculo si falla la imagen
+            c.setFillColor(color_verde_oscuro)
+            c.circle(logo_right_x, logo_y, 0.8*inch, stroke=1, fill=0)
+            c.setFont("Helvetica-Bold", 9)
+            c.setFillColor(color_marron)
+            c.drawCentredString(logo_right_x, logo_y, "FUSAGASUGÁ")
+    else:
+        print(f"Advertencia: No se encontró {logo_fusita_path}")
+        # Fallback: dibujar círculo
+        c.setFillColor(color_verde_oscuro)
+        c.circle(logo_right_x, logo_y, 0.8*inch, stroke=1, fill=0)
+        c.setFont("Helvetica-Bold", 9)
+        c.setFillColor(color_marron)
+        c.drawCentredString(logo_right_x, logo_y, "FUSAGASUGÁ")
+    
+    # ========================================
+    # INFORMACIÓN DE PIE DE PÁGINA
+    # ========================================
+    
     c.setFont("Helvetica", 11)
     c.setFillColor(color_marron)
-    fecha_texto = f"Fecha de expedición: {fecha_emision.strftime('%d de %B de %Y')}"
+    
+    # Traducir el mes al español
+    meses = {
+        'January': 'enero', 'February': 'febrero', 'March': 'marzo',
+        'April': 'abril', 'May': 'mayo', 'June': 'junio',
+        'July': 'julio', 'August': 'agosto', 'September': 'septiembre',
+        'October': 'octubre', 'November': 'noviembre', 'December': 'diciembre'
+    }
+    mes_ingles = fecha_emision.strftime('%B')
+    mes_espanol = meses.get(mes_ingles, mes_ingles)
+    
+    fecha_texto = f"Fecha de expedición: {fecha_emision.day} de {mes_espanol} de {fecha_emision.year}"
     fecha_width = c.stringWidth(fecha_texto, "Helvetica", 11)
     c.drawString((width - fecha_width) / 2, 1.2*inch, fecha_texto)
     
@@ -139,6 +200,7 @@ def generar_certificado(nombre_completo, fecha_emision, codigo_certificado, outp
     # Finalizar y guardar
     c.save()
     
+    print(f"✅ Certificado generado exitosamente: {output_path}")
     return output_path
 
 
