@@ -751,7 +751,7 @@ def eliminar_menu(id):
 @rol_required('admin')
 def gestion_descuentos(cafeteria_id):
     # SOLUCIÓN: Definir la variable 'fecha_hoy' antes de usarla
-    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+    fecha_hoy = datetime.now().date()
             
 
     conn = get_db_connection()

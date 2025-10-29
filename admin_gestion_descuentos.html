@@ -130,7 +130,7 @@
                                     </div>
                                 </div>
 
-                                {% if descuento.fecha_fin < now().date() %}
+                                {% if descuento.fecha_fin < fecha_hoy %}
                                 <div class="mt-2 text-sm text-red-600 font-semibold">
                                     ⚠️ Descuento expirado
                                 </div>
