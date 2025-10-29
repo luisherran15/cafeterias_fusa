@@ -2,27 +2,319 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar {{ cafeteria.nombre }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 18px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        input::placeholder {
+            color: #aaa;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .info-box p {
+            color: #1565C0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #0D47A1;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .coordinates-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .coordinates-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Editar Cafetería: {{ cafeteria.nombre }}</h1>
-    
-    <form method="POST" action="{{ url_for('actualizar_cafeteria', id=cafeteria.id) }}">
-        <label for="nombre">Nombre del Local:</label><br>
-        <input type="text" name="nombre" value="{{ cafeteria.nombre }}" required><br><br>
+    <div class="container">
+        <div class="header">
+            <div class="icon">✏️</div>
+            <h1>Editar Cafetería</h1>
+            <p class="subtitle">{{ cafeteria.nombre }}</p>
+        </div>
 
-        <label for="direccion">Dirección:</label><br>
-        <input type="text" name="direccion" value="{{ cafeteria.direccion }}" required><br><br>
+        <div class="info-box">
+            <p>
+                <strong>💡 Tip:</strong> Asegúrate de que las coordenadas sean precisas para que tu cafetería aparezca correctamente en el mapa.
+            </p>
+        </div>
 
-        <label for="latitud">Latitud (Mapa):</label><br>
-        <input type="text" name="latitud" value="{{ cafeteria.latitud }}" required><br><br>
-        
-        <label for="longitud">Longitud (Mapa):</label><br>
-        <input type="text" name="longitud" value="{{ cafeteria.longitud }}" required><br><br>
+        <form method="POST" action="{{ url_for('actualizar_cafeteria', id=cafeteria.id) }}">
+            <div class="form-group">
+                <label for="nombre">Nombre del Local</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">☕</span>
+                    <input type="text" 
+                           id="nombre" 
+                           name="nombre" 
+                           value="{{ cafeteria.nombre }}" 
+                           placeholder="Ej: Café Central"
+                           required>
+                </div>
+            </div>
 
-        <button type="submit">Guardar Cambios</button>
-    </form>
-    
-    <p style="margin-top: 20px;"><a href="{{ url_for('admin_dashboard') }}">Volver al Dashboard</a></p>
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">📍</span>
+                    <input type="text" 
+                           id="direccion" 
+                           name="direccion" 
+                           value="{{ cafeteria.direccion }}" 
+                           placeholder="Ej: Calle Principal #123"
+                           required>
+                </div>
+            </div>
+
+            <div class="coordinates-grid">
+                <div class="form-group">
+                    <label for="latitud">Latitud</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🌐</span>
+                        <input type="text" 
+                               id="latitud" 
+                               name="latitud" 
+                               value="{{ cafeteria.latitud }}" 
+                               placeholder="4.3426696"
+                               pattern="^-?([0-9]{1,2}|1[0-7][0-9]|180)(\.[0-9]+)?$"
+                               required>
+                    </div>
+                    <p class="help-text">Entre -90 y 90</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="longitud">Longitud</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🌐</span>
+                        <input type="text" 
+                               id="longitud" 
+                               name="longitud" 
+                               value="{{ cafeteria.longitud }}" 
+                               placeholder="-74.4153804"
+                               pattern="^-?([0-9]{1,2}|1[0-7][0-9]|180)(\.[0-9]+)?$"
+                               required>
+                    </div>
+                    <p class="help-text">Entre -180 y 180</p>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">
+                    💾 Guardar Cambios
+                </button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                    ← Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Validación de coordenadas en tiempo real
+        const latitudInput = document.getElementById('latitud');
+        const longitudInput = document.getElementById('longitud');
+
+        function validateCoordinate(input, min, max) {
+            input.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (!isNaN(value)) {
+                    if (value < min || value > max) {
+                        this.style.borderColor = '#dc3545';
+                    } else {
+                        this.style.borderColor = '#28a745';
+                    }
+                }
+            });
+        }
+
+        validateCoordinate(latitudInput, -90, 90);
+        validateCoordinate(longitudInput, -180, 180);
+
+        // Animación al enfocar inputs
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'scale(1.02)';
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'scale(1)';
+            });
+        });
+    </script>
 </body>
 </html>
