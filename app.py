@@ -64,6 +64,7 @@ def index():
             finally:
                 conn.close()
     
+    
     # Convertir a JSON para usar en JavaScript
     import json
     cafeterias_json = json.dumps(cafeterias)
@@ -749,12 +750,16 @@ def eliminar_menu(id):
 @app.route('/admin/descuento/gestion/<int:cafeteria_id>', methods=['GET'])
 @rol_required('admin')
 def gestion_descuentos(cafeteria_id):
+    # SOLUCIÓN: Definir la variable 'fecha_hoy' antes de usarla
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+            
+
     conn = get_db_connection()
     descuentos = []
     cafeteria = None
     mensaje = request.args.get('mensaje')
     error = request.args.get('error')
-    
+            
     if conn:
         try:
             with conn.cursor() as cursor:
@@ -776,13 +781,16 @@ def gestion_descuentos(cafeteria_id):
             error = "Error al cargar los descuentos."
         finally:
             conn.close()
-    
-    return render_template('admin_gestion_descuentos.html', 
+       
+
+        return render_template('admin_gestion_descuentos.html', 
                          cafeteria=cafeteria,
                          descuentos=descuentos, 
                          cafeteria_id=cafeteria_id,
                          mensaje=mensaje,
-                         error=error)
+                         error=error,
+                        fecha_hoy=fecha_hoy)  # <-- AGREGAR ESTO
+
 
 
 @app.route('/admin/descuento/crear/<int:cafeteria_id>', methods=['POST'])

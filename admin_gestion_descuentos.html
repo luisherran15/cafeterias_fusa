@@ -109,7 +109,7 @@
                 {% if descuentos %}
                 <div class="space-y-4">
                     {% for descuento in descuentos %}
-                    <div class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 transition {% if descuento.fecha_fin < now().date() %}bg-gray-50 opacity-60{% else %}bg-white{% endif %}">
+                    <div class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-400 transition {% if descuento.fecha_fin < fecha_hoy %}bg-gray-50 opacity-60{% else %}bg-white{% endif %}">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-2">
@@ -134,7 +134,7 @@
                                 <div class="mt-2 text-sm text-red-600 font-semibold">
                                     ⚠️ Descuento expirado
                                 </div>
-                                {% elif descuento.fecha_inicio > now().date() %}
+                                {% elif descuento.fecha_inicio > fecha_hoy %}
                                 <div class="mt-2 text-sm text-blue-600 font-semibold">
                                     ⏳ Próximamente activo
                                 </div>
