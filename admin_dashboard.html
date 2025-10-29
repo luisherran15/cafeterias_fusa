@@ -101,19 +101,6 @@
             color: #999;
         }
 
-        .highlight-box {
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 8px;
-        }
-
-        .highlight-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #667eea;
-        }
-
         .error {
             background: #f8d7da;
             color: #721c24;
@@ -174,6 +161,18 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .qr-btn {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .qr-btn:hover {
+            color: #ee5a52;
         }
 
         .edit-btn {
@@ -199,14 +198,14 @@
         }
 
         .discount-btn {
-            color: #ff6b6b;
+            color: #ffc107;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s;
         }
 
         .discount-btn:hover {
-            color: #ee5a52;
+            color: #e0a800;
         }
 
         .delete-btn {
@@ -387,7 +386,8 @@
                         <td>{{ cafe.direccion }}</td>
                         <td>
                             <div class="actions">
-                                <a href="{{ url_for('developer_dashboard', cafeteria_id=cafe.id) }}" class="menu-btn" target="_blank">📱 Ver QR</a>
+                                <!-- CORREGIDO: cafeteria_id en lugar de cafeteria_id -->
+                                <a href="{{ url_for('ver_qr_cafeteria', cafeteria_id=cafe.id) }}" class="qr-btn" target="_blank">📱 Ver QR</a>
                                 <span style="color: #ddd;">|</span>
                                 <a href="{{ url_for('gestion_menus', cafeteria_id=cafe.id) }}" class="menu-btn">📋 Menú</a>
                                 <span style="color: #ddd;">|</span>
@@ -439,10 +439,5 @@
             </form>
         </div>
     </div>
-
-    <script>
-        console.log('Admin Dashboard cargado');
-        console.log('Estadísticas:', {{ stats | tojson }});
-    </script>
 </body>
 </html>

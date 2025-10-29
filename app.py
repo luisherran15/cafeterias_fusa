@@ -577,8 +577,8 @@ def gestion_menus(cafeteria_id):
                 if not cafeteria or cafeteria['admin_id'] != session['user_id']:
                     return redirect(url_for('admin_dashboard', error="Acceso denegado al menú."))
                 
-                # 2. Si es válido, trae todos los menús de esa cafetería
-                sql_menus = "SELECT id, nombre, descripcion, precio FROM menus WHERE cafeteria_id = %s"
+                # 2. Si es válido, trae todos los menús de esa cafetería - USAR nombre_plato
+                sql_menus = "SELECT id, nombre_plato as nombre, descripcion, precio FROM menus WHERE cafeteria_id = %s"
                 cursor.execute(sql_menus, (cafeteria_id,))
                 menus = cursor.fetchall()
                 
@@ -617,9 +617,9 @@ def crear_menu(cafeteria_id):
             if not cafeteria or cafeteria['admin_id'] != session['user_id']:
                 return redirect(url_for('admin_dashboard', error="Intento de creación no autorizado."))
             
-            # 2. Insertar el nuevo producto
+            # 2. Insertar el nuevo producto - USAR nombre_plato
             sql = """
-                INSERT INTO menus (cafeteria_id, nombre, descripcion, precio)
+                INSERT INTO menus (cafeteria_id, nombre_plato, descripcion, precio)
                 VALUES (%s, %s, %s, %s)
             """
             cursor.execute(sql, (cafeteria_id, nombre, descripcion, precio))
@@ -643,9 +643,9 @@ def editar_menu(id):
     if conn:
         try:
             with conn.cursor() as cursor:
-                # Traer el menú y verificar propiedad a través de la cafetería
+                # Traer el menú y verificar propiedad a través de la cafetería - USAR nombre_plato
                 sql = """
-                    SELECT m.id, m.nombre, m.descripcion, m.precio, m.cafeteria_id, c.admin_id
+                    SELECT m.id, m.nombre_plato as nombre, m.descripcion, m.precio, m.cafeteria_id, c.admin_id
                     FROM menus m
                     INNER JOIN cafeterias c ON m.cafeteria_id = c.id
                     WHERE m.id = %s
@@ -689,9 +689,9 @@ def actualizar_menu(id):
             if not menu or menu['admin_id'] != session['user_id']:
                 return redirect(url_for('admin_dashboard', error="Acceso denegado."))
             
-            # Actualizar el menú
+            # Actualizar el menú - USAR nombre_plato
             sql = """
-                UPDATE menus SET nombre = %s, descripcion = %s, precio = %s
+                UPDATE menus SET nombre_plato = %s, descripcion = %s, precio = %s
                 WHERE id = %s
             """
             cursor.execute(sql, (nombre, descripcion, precio, id))
@@ -766,8 +766,8 @@ def gestion_descuentos(cafeteria_id):
                 if not cafeteria or cafeteria['admin_id'] != session['user_id']:
                     return redirect(url_for('admin_dashboard', error="Acceso denegado a los descuentos."))
                 
-                # 2. Traer todos los descuentos de esa cafetería
-                sql_descuentos = "SELECT id, nombre, descripcion, porcentaje_descuento, fecha_inicio, fecha_fin FROM descuentos_bonos WHERE cafeteria_id = %s"
+                # 2. Traer todos los descuentos de esa cafetería - CORREGIR COLUMNAS
+                sql_descuentos = "SELECT id, nombre, porcentaje as porcentaje_descuento, fecha_inicio, fecha_fin FROM descuentos_bonos WHERE cafeteria_id = %s"
                 cursor.execute(sql_descuentos, (cafeteria_id,))
                 descuentos = cursor.fetchall()
                 
@@ -789,7 +789,6 @@ def gestion_descuentos(cafeteria_id):
 @rol_required('admin')
 def crear_descuento(cafeteria_id):
     nombre = request.form.get('nombre')
-    descripcion = request.form.get('descripcion')
     porcentaje_descuento = request.form.get('porcentaje_descuento')
     fecha_inicio = request.form.get('fecha_inicio')
     fecha_fin = request.form.get('fecha_fin')
@@ -808,12 +807,12 @@ def crear_descuento(cafeteria_id):
             if not cafeteria or cafeteria['admin_id'] != session['user_id']:
                 return redirect(url_for('admin_dashboard', error="Acceso denegado."))
             
-            # Insertar el nuevo descuento
+            # Insertar el nuevo descuento - USAR porcentaje y fecha_expiracion
             sql = """
-                INSERT INTO descuentos_bonos (cafeteria_id, nombre, descripcion, porcentaje_descuento, fecha_inicio, fecha_fin)
+                INSERT INTO descuentos_bonos (cafeteria_id, nombre, porcentaje, fecha_inicio, fecha_fin, fecha_expiracion)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql, (cafeteria_id, nombre, descripcion, porcentaje_descuento, fecha_inicio, fecha_fin))
+            cursor.execute(sql, (cafeteria_id, nombre, porcentaje_descuento, fecha_inicio, fecha_fin, fecha_fin))
         
         conn.commit()
         return redirect(url_for('gestion_descuentos', cafeteria_id=cafeteria_id, mensaje="Descuento agregado con éxito."))
@@ -836,7 +835,7 @@ def editar_descuento(id):
             with conn.cursor() as cursor:
                 # Traer el descuento y verificar propiedad a través de la cafetería
                 sql = """
-                    SELECT d.id, d.nombre, d.descripcion, d.porcentaje_descuento, d.fecha_inicio, d.fecha_fin, d.cafeteria_id, c.admin_id
+                    SELECT d.id, d.nombre, d.porcentaje as porcentaje_descuento, d.fecha_inicio, d.fecha_fin, d.cafeteria_id, c.admin_id
                     FROM descuentos_bonos d
                     INNER JOIN cafeterias c ON d.cafeteria_id = c.id
                     WHERE d.id = %s
@@ -858,7 +857,6 @@ def editar_descuento(id):
 @rol_required('admin')
 def actualizar_descuento(id):
     nombre = request.form.get('nombre')
-    descripcion = request.form.get('descripcion')
     porcentaje_descuento = request.form.get('porcentaje_descuento')
     fecha_inicio = request.form.get('fecha_inicio')
     fecha_fin = request.form.get('fecha_fin')
@@ -885,10 +883,10 @@ def actualizar_descuento(id):
             # Actualizar el descuento
             sql = """
                 UPDATE descuentos_bonos 
-                SET nombre = %s, descripcion = %s, porcentaje_descuento = %s, fecha_inicio = %s, fecha_fin = %s
+                SET nombre = %s, porcentaje = %s, fecha_inicio = %s, fecha_fin = %s, fecha_expiracion = %s
                 WHERE id = %s
             """
-            cursor.execute(sql, (nombre, descripcion, porcentaje_descuento, fecha_inicio, fecha_fin, id))
+            cursor.execute(sql, (nombre, porcentaje_descuento, fecha_inicio, fecha_fin, fecha_fin, id))
         
         conn.commit()
         return redirect(url_for('gestion_descuentos', cafeteria_id=descuento['cafeteria_id'], mensaje="Descuento actualizado con éxito."))
@@ -1089,6 +1087,124 @@ def cliente_dashboard():
                          mensaje=mensaje,
                          error=error,
                          session=session)
+
+
+# ============================================
+# --- SISTEMA DE QR PARA ADMIN ---
+# ============================================
+
+@app.route('/admin/cafeteria/<int:cafeteria_id>/qr')
+@rol_required('admin')
+def ver_qr_cafeteria(cafeteria_id):
+    """Muestra el QR de una cafetería para que los clientes escaneen"""
+    conn = get_db_connection()
+    
+    if not conn:
+        return redirect(url_for('admin_dashboard', error='Error de conexión'))
+    
+    try:
+        with conn.cursor() as cursor:
+            # Verificar que la cafetería pertenece al admin
+            cursor.execute("""
+                SELECT id, nombre, direccion 
+                FROM cafeterias 
+                WHERE id = %s AND admin_id = %s
+            """, (cafeteria_id, session['user_id']))
+            
+            cafeteria = cursor.fetchone()
+            
+            if not cafeteria:
+                return redirect(url_for('admin_dashboard', error='Cafetería no encontrada'))
+            
+            # Generar código QR
+            import qrcode
+            from io import BytesIO
+            import base64
+            
+            # El QR contiene el ID de la cafetería
+            qr_data = str(cafeteria['id'])
+            
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(qr_data)
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Convertir a base64 para mostrar en HTML
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            
+            return render_template('admin_ver_qr.html', 
+                                 cafeteria=cafeteria,
+                                 qr_image=img_str)
+            
+    except Exception as e:
+        print(f"Error generando QR: {e}")
+        return redirect(url_for('admin_dashboard', error=f'Error al generar QR: {str(e)}'))
+    finally:
+        conn.close()
+
+
+@app.route('/admin/cafeteria/<int:cafeteria_id>/qr/download')
+@rol_required('admin')
+def descargar_qr_cafeteria(cafeteria_id):
+    """Descarga el QR como imagen PNG"""
+    conn = get_db_connection()
+    
+    if not conn:
+        return "Error de conexión", 500
+    
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT id, nombre 
+                FROM cafeterias 
+                WHERE id = %s AND admin_id = %s
+            """, (cafeteria_id, session['user_id']))
+            
+            cafeteria = cursor.fetchone()
+            
+            if not cafeteria:
+                return "Cafetería no encontrada", 404
+            
+            # Generar QR
+            import qrcode
+            from io import BytesIO
+            
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(str(cafeteria['id']))
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Guardar en memoria
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            buffered.seek(0)
+            
+            return send_file(
+                buffered,
+                mimetype='image/png',
+                as_attachment=True,
+                download_name=f'QR_{cafeteria["nombre"].replace(" ", "_")}.png'
+            )
+            
+    except Exception as e:
+        print(f"Error generando QR para descarga: {e}")
+        return "Error al generar QR", 500
+    finally:
+        conn.close()
 
 
 # ============================================

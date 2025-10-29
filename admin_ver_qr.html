@@ -113,6 +113,9 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
         }
 
         .btn-primary {
@@ -206,7 +209,7 @@
             <button onclick="window.print()" class="btn btn-primary">
                 🖨️ Imprimir QR
             </button>
-            <a href="{{ url_for('generar_qr', cafeteria_id=cafeteria.id) }}" class="btn btn-primary" download>
+            <a href="{{ url_for('descargar_qr_cafeteria', cafeteria_id=cafeteria.id) }}" class="btn btn-primary" download>
                 💾 Descargar QR
             </a>
             <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
